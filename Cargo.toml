@@ -1,15 +1,10 @@
 [package]
-name = "slint-rust-template"
+name = "muos-samba"
 version = "0.1.0"
+authors = ["Sky <sky@leite.dev>"]
 edition = "2021"
-
-[profile.dev]
-lto = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-slint = "1.7.2"
-
-[build-dependencies]
-slint-build = "1.7.2"
+sdl2 = { version = "0.37.0", features = ["gfx", "static-link", "use-pkgconfig"] }

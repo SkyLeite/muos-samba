@@ -102,24 +102,40 @@
             (if isRelease then SDL2Arm else SDL2)
             (if isRelease then (pkgsCrosss.SDL2_gfx.override { SDL2 = SDL2Arm; }) else SDL2_gfx)
             (if isRelease then pkgsCrosss.stdenv.cc else stdenv.cc)
+            wayland
+            wayland-scanner
+            xorg.libXcursor
+            xorg.libXrandr
+            xorg.libX11
+            xorg.libXi
+            xorg.libXScrnSaver
           ];
 
-          postInstall = ''
-            patchelf --set-interpreter /lib/ld-linux-aarch64.so.1 $out/bin/muos-samba
-          '';
+          postInstall =
+            if isRelease then
+              ''
+                patchelf --set-interpreter /lib/ld-linux-aarch64.so.1 $out/bin/muos-samba
+              ''
+            else
+              null;
         };
 
         package = isRelease: naersk'.buildPackage (packageConfig isRelease);
 
-        darwinPackages = if pkgs.stdenv.isDarwin then with pkgs; [
-            darwin.apple_sdk.frameworks.Carbon
-            darwin.apple_sdk.frameworks.Cocoa
-            darwin.apple_sdk.frameworks.ScriptingBridge
-            darwin.apple_sdk.frameworks.ForceFeedback
-            darwin.apple_sdk.frameworks.GameController
-            darwin.apple_sdk.frameworks.CoreHaptics
-            iconv
-          ] else [];
+        darwinPackages =
+          if pkgs.stdenv.isDarwin then
+            with pkgs;
+            [
+              darwin.apple_sdk.frameworks.Carbon
+              darwin.apple_sdk.frameworks.Cocoa
+              darwin.apple_sdk.frameworks.ScriptingBridge
+              darwin.apple_sdk.frameworks.ForceFeedback
+              darwin.apple_sdk.frameworks.GameController
+              darwin.apple_sdk.frameworks.CoreHaptics
+              iconv
+            ]
+          else
+            [ ];
       in
       rec {
         # For `nix build` & `nix run`:
@@ -129,19 +145,21 @@
 
         # For `nix develop` (optional, can be skipped):
         devShell = pkgs.mkShell rec {
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-            toolchain
-            cmake
-            xorg.libXcursor
-            xorg.libXrandr
-            xorg.libX11
-            xorg.libXi
-            xorg.libXScrnSaver
-            # vulkan-loader
-            SDL2
-            SDL2_gfx
-          ] ++ darwinPackages;
+          nativeBuildInputs =
+            with pkgs;
+            [
+              pkg-config
+              toolchain
+              cmake
+              xorg.libXcursor
+              xorg.libXrandr
+              xorg.libX11
+              xorg.libXi
+              xorg.libXScrnSaver
+              SDL2
+              SDL2_gfx
+            ]
+            ++ darwinPackages;
 
           shellHook = ''
             LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${pkgs.lib.makeLibraryPath nativeBuildInputs}"

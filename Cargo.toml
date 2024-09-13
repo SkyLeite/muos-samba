@@ -8,3 +8,4 @@ edition = "2021"
 
 [dependencies]
 sdl2 = { version = "0.37.0", features = ["gfx", "static-link", "use-pkgconfig"] }
+taffy = "0.5.2"

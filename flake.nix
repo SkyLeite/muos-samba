@@ -83,6 +83,22 @@
           inherit (pkgsArm.buildPackages) wayland wayland-protocols;
         };
 
+        darwinPackages =
+          if pkgs.stdenv.isDarwin then
+            with pkgs;
+            [
+              darwin.apple_sdk.frameworks.Carbon
+              darwin.apple_sdk.frameworks.Cocoa
+              darwin.apple_sdk.frameworks.ScriptingBridge
+              darwin.apple_sdk.frameworks.ForceFeedback
+              darwin.apple_sdk.frameworks.GameController
+              darwin.apple_sdk.frameworks.CoreHaptics
+              darwin.apple_sdk.frameworks.AVFoundation
+              iconv
+            ]
+          else
+            [ ];
+
         packageConfig = isRelease: {
           src = ./.;
 
@@ -99,10 +115,11 @@
 
           depsBuildBuild = with pkgs; [
             pkgs.cmake
-            (if isRelease then SDL2Arm else SDL2)
+            # (if isRelease then SDL2Arm else SDL2)
             # (if isRelease then (pkgsCrosss.SDL2_ttf.override { SDL2 = SDL2Arm; }) else SDL2_ttf)
             # (if isRelease then (pkgsCrosss.SDL2_gfx.override { SDL2 = SDL2Arm; }) else SDL2_gfx)
             (if isRelease then pkgsCrosss.stdenv.cc else stdenv.cc)
+            libGL
             wayland
             wayland-scanner
             xorg.libXcursor
@@ -110,7 +127,7 @@
             xorg.libX11
             xorg.libXi
             xorg.libXScrnSaver
-          ];
+          ] ++ darwinPackages;
 
           postInstall =
             if isRelease then
@@ -123,20 +140,6 @@
 
         package = isRelease: naersk'.buildPackage (packageConfig isRelease);
 
-        darwinPackages =
-          if pkgs.stdenv.isDarwin then
-            with pkgs;
-            [
-              darwin.apple_sdk.frameworks.Carbon
-              darwin.apple_sdk.frameworks.Cocoa
-              darwin.apple_sdk.frameworks.ScriptingBridge
-              darwin.apple_sdk.frameworks.ForceFeedback
-              darwin.apple_sdk.frameworks.GameController
-              darwin.apple_sdk.frameworks.CoreHaptics
-              iconv
-            ]
-          else
-            [ ];
       in
       rec {
         # For `nix build` & `nix run`:

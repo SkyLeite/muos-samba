@@ -115,9 +115,9 @@
 
           depsBuildBuild = with pkgs; [
             pkgs.cmake
-            # (if isRelease then SDL2Arm else SDL2)
-            # (if isRelease then (pkgsCrosss.SDL2_ttf.override { SDL2 = SDL2Arm; }) else SDL2_ttf)
-            # (if isRelease then (pkgsCrosss.SDL2_gfx.override { SDL2 = SDL2Arm; }) else SDL2_gfx)
+            (if isRelease then SDL2Arm else SDL2)
+            (if isRelease then (pkgsCrosss.SDL2_ttf.override { SDL2 = SDL2Arm; }) else SDL2_ttf)
+            (if isRelease then (pkgsCrosss.SDL2_gfx.override { SDL2 = SDL2Arm; }) else SDL2_gfx)
             (if isRelease then pkgsCrosss.stdenv.cc else stdenv.cc)
             libGL
             wayland

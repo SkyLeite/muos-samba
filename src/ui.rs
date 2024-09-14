@@ -1,10 +1,18 @@
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::Canvas, video::Window};
 use taffy::prelude::*;
 
+use crate::{
+    util,
+    widgets::{Border, Button, Widget},
+};
+
+pub struct Context {}
+
 pub struct Ui {
-    tree: TaffyTree<()>,
+    tree: TaffyTree<Box<dyn Widget>>,
     root_node: NodeId,
     size: Size<AvailableSpace>,
+    context: Context,
 }
 
 impl Ui {
@@ -13,7 +21,7 @@ impl Ui {
             width: length(640. - 1.),
             height: length(480. - 1.),
         };
-        let mut taffy: TaffyTree<()> = TaffyTree::new();
+        let mut taffy: TaffyTree<Box<dyn Widget>> = TaffyTree::new();
 
         let root_style = Style {
             size,
@@ -28,17 +36,33 @@ impl Ui {
         };
 
         // Define the child nodes
-        let header = taffy.new_leaf(Style {
-            grid_row: line(1),
-            grid_column: span(3),
-            border: Rect {
-                left: length(2.),
-                right: length(2.),
-                top: length(2.),
-                bottom: length(2.),
+        let header_button = Button::new(
+            &mut taffy,
+            Style {
+                size: Size {
+                    width: length(50.),
+                    height: length(50.),
+                },
+                ..Default::default()
             },
-            ..Default::default()
-        })?;
+            "Help".to_string(),
+        )?;
+
+        let header = taffy.new_with_children(
+            Style {
+                grid_row: line(1),
+                grid_column: span(3),
+                border: Rect {
+                    left: length(2.),
+                    right: length(2.),
+                    top: length(2.),
+                    bottom: length(2.),
+                },
+                ..Default::default()
+            },
+            &[header_button],
+        )?;
+
         let left_sidebar = taffy.new_leaf(Style {
             grid_row: line(2),
             grid_column: line(1),
@@ -87,49 +111,26 @@ impl Ui {
         self.compute()?;
         self.tree.print_tree(self.root_node);
 
-        for node in self.tree.children(self.root_node)? {
-            dbg!(node);
+        self.render_node(self.root_node, canvas)?;
+
+        Ok(())
+    }
+
+    pub fn render_node(
+        &mut self,
+        node: NodeId,
+        canvas: &mut Canvas<Window>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        for node in self.tree.children(node)? {
             let layout = self.tree.layout(node)?;
-            let location = layout.location;
-            let size = layout.size;
-            let border = layout.border;
-            dbg!(border);
 
-            // Upper border
-            canvas.line(
-                location.x as i16,
-                location.y as i16,
-                (location.x + size.width) as i16,
-                (location.y) as i16,
-                Color::RGB(255, 255, 0),
-            )?;
+            let node_context = self.tree.get_node_context(node);
+            if let Some(context) = node_context {
+                let absolute_position = util::get_absolute_position(&self.tree, node)?;
+                context.render(absolute_position, layout, canvas)?;
+            }
 
-            // Left border
-            canvas.line(
-                location.x as i16,
-                location.y as i16,
-                (location.x) as i16,
-                (location.y + size.height) as i16,
-                Color::RGB(255, 255, 0),
-            )?;
-
-            // Bottom border
-            canvas.line(
-                location.x as i16,
-                (location.y + size.height) as i16,
-                (location.x + size.width) as i16,
-                (location.y + size.height) as i16,
-                Color::RGB(255, 255, 0),
-            )?;
-
-            // Right border
-            canvas.line(
-                (location.x + size.width) as i16,
-                location.y as i16,
-                (location.x + size.width) as i16,
-                (location.y + size.height) as i16,
-                Color::RGB(255, 255, 0),
-            )?;
+            self.render_node(node, canvas)?;
         }
 
         Ok(())

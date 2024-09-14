@@ -7,5 +7,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sdl2 = { version = "0.37.0", features = ["gfx", "static-link", "use-pkgconfig"] }
+sdl2 = { version = "0.37.0", features = ["ttf", "gfx", "static-link", "use-pkgconfig"] }
 taffy = "0.5.2"

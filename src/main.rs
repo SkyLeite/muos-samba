@@ -1,12 +1,11 @@
 extern crate sdl2;
 
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use sdl2::pixels::{self, Color};
 
-use sdl2::gfx::primitives::DrawRenderer;
-
 mod ui;
+mod util;
+mod widgets;
 
 const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;

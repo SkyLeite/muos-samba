@@ -3,10 +3,17 @@ use egui_backend::egui::FullOutput;
 use egui_backend::sdl2::video::GLProfile;
 use egui_backend::{egui, gl, sdl2};
 use egui_backend::{sdl2::event::Event, DpiScaling, ShaderVersion};
+use file_tree::FileTree;
 use std::time::Instant;
 // Alias the backend to something less mouthful
 use egui_sdl2_gl as egui_backend;
 use sdl2::video::SwapInterval;
+
+mod file_system;
+mod file_tree;
+mod fstree;
+mod prelude;
+mod ui;
 
 const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;
@@ -23,33 +30,25 @@ fn main() {
     gl_attr.set_multisample_samples(4);
 
     let window = video_subsystem
-        .window(
-            "Demo: Egui backend for SDL2 + GL",
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-        )
+        .window("MuOSMB", SCREEN_WIDTH, SCREEN_HEIGHT)
         .opengl()
-        .resizable()
         .build()
         .unwrap();
 
     // Create a window context
     let _ctx = window.gl_create_context().unwrap();
     // Init egui stuff
-    let shader_ver = ShaderVersion::Default;
+    // let shader_ver = ShaderVersion::Default;
     // On linux use GLES SL 100+, like so:
-    // let shader_ver = ShaderVersion::Adaptive;
+    let shader_ver = ShaderVersion::Adaptive;
     let (mut painter, mut egui_state) =
-        egui_backend::with_sdl2(&window, shader_ver, DpiScaling::Default);
+        egui_backend::with_sdl2(&window, shader_ver, DpiScaling::Custom(2.0));
     let egui_ctx = egui::Context::default();
+
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut test_str: String =
-        "A text box to write in. Cut, copy, paste commands are available.".to_owned();
-
-    let mut enable_vsync = false;
-    let mut quit = false;
-    let mut slider = 0.0;
+    let enable_vsync = false;
+    let quit = false;
 
     if enable_vsync {
         if let Err(error) = window.subsystem().gl_set_swap_interval(SwapInterval::VSync) {
@@ -68,6 +67,8 @@ fn main() {
         );
     }
 
+    let path = std::path::Path::new("/mnt/hdd/projects/Ougon");
+    let tree = fstree::FsTree::from_path(path);
     let start_time = Instant::now();
 
     'running: loop {
@@ -80,18 +81,7 @@ fn main() {
         egui_state.input.time = Some(start_time.elapsed().as_secs_f64());
         egui_ctx.begin_frame(egui_state.input.take());
 
-        egui::CentralPanel::default().show(&egui_ctx, |ui| {
-            ui.label(" ");
-            ui.text_edit_multiline(&mut test_str);
-            ui.label(" ");
-            ui.add(egui::Slider::new(&mut slider, 0.0..=50.0).text("Slider"));
-            ui.label(" ");
-            ui.add(Checkbox::new(&mut enable_vsync, "Reduce CPU Usage?"));
-            ui.separator();
-            if ui.button("Quit?").clicked() {
-                quit = true;
-            }
-        });
+        ui::draw(&egui_ctx, &tree);
 
         let FullOutput {
             platform_output,
@@ -125,6 +115,12 @@ fn main() {
             if let Some(event) = event_pump.wait_event_timeout(5) {
                 match event {
                     Event::Quit { .. } => break 'running,
+                    Event::ControllerButtonDown { button, .. } => match button {
+                        sdl2::controller::Button::Start => break 'running,
+                        x => {
+                            dbg!(x);
+                        }
+                    },
                     _ => {
                         // Process input event
                         egui_state.process_input(&window, event, &mut painter);
@@ -136,7 +132,9 @@ fn main() {
                 match event {
                     Event::ControllerButtonDown { button, .. } => match button {
                         sdl2::controller::Button::Start => break 'running,
-                        _ => {}
+                        x => {
+                            dbg!(x);
+                        }
                     },
 
                     Event::Quit { .. } => break 'running,

@@ -2,14 +2,11 @@ use egui_backend::egui::FullOutput;
 use egui_backend::sdl2::video::GLProfile;
 use egui_backend::{egui, gl, sdl2};
 use egui_backend::{sdl2::event::Event, DpiScaling, ShaderVersion};
-use egui_sdl2_gl::sdl2::event::EventPollIterator;
 use std::time::Instant;
 // Alias the backend to something less mouthful
 use egui_sdl2_gl as egui_backend;
 use sdl2::video::SwapInterval;
 
-mod file_system;
-mod file_tree;
 mod fstree;
 mod gamepad;
 mod prelude;

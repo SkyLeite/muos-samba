@@ -24,27 +24,20 @@ impl FsTree {
     // Build a FsTree from a directory path
     pub fn from_path(path: &Path) -> Self {
         let mut tree = FsTree::new();
-        Self::build_tree(&path, &mut tree, 10, 0);
+        Self::build_tree(path, &mut tree, 10, 0);
         tree
     }
 
     fn build_tree(path: &Path, tree: &mut FsTree, max_depth: usize, current_depth: usize) {
         if path.is_dir() {
-            for entry in std::fs::read_dir(path).unwrap() {
-                if let Ok(entry) = entry {
-                    let child_path = entry.path();
-                    let mut child_tree = FsTree::new();
-                    if current_depth <= max_depth {
-                        Self::build_tree(
-                            &child_path,
-                            &mut child_tree,
-                            max_depth,
-                            current_depth + 1,
-                        );
-                    }
-
-                    tree.insert(child_path.into(), child_tree);
+            for entry in std::fs::read_dir(path).unwrap().flatten() {
+                let child_path = entry.path();
+                let mut child_tree = FsTree::new();
+                if current_depth <= max_depth {
+                    Self::build_tree(&child_path, &mut child_tree, max_depth, current_depth + 1);
                 }
+
+                tree.insert(child_path, child_tree);
             }
         }
     }

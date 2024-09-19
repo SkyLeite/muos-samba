@@ -38,16 +38,13 @@ pub fn init(sdl_context: &Sdl) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn handle(event: &Event, egui_state: &mut EguiStateHandler) {
-    match event {
-        Event::ControllerButtonDown { button, .. } => {
-            egui_state.input.events.push(egui::Event::Key {
-                key: *Key::from(*button),
-                physical_key: None,
-                pressed: true,
-                repeat: false,
-                modifiers: egui::Modifiers::NONE,
-            });
-        }
-        _ => {}
+    if let Event::ControllerButtonDown { button, .. } = event {
+        egui_state.input.events.push(egui::Event::Key {
+            key: *Key::from(*button),
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        });
     }
 }

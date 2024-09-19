@@ -1,10 +1,5 @@
-use std::ops::Deref;
-
-use egui::Modifiers;
-use egui_sdl2_gl::{sdl2::event::Event, EguiStateHandler};
-use sdl2::controller::Button;
-
 use crate::prelude::*;
+use sdl2::controller::Button;
 
 pub struct Key(egui::Key);
 
@@ -41,20 +36,5 @@ impl From<Button> for Key {
             Button::Paddle4 => todo!(),
             Button::Touchpad => todo!(),
         })
-    }
-}
-
-pub fn handle(event: &Event, egui_state: &mut EguiStateHandler) {
-    match event {
-        Event::ControllerButtonDown { button, .. } => {
-            egui_state.input.events.push(egui::Event::Key {
-                key: *Key::from(*button),
-                physical_key: None,
-                pressed: true,
-                repeat: false,
-                modifiers: egui::Modifiers::NONE,
-            });
-        }
-        _ => {}
     }
 }

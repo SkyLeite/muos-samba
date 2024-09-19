@@ -60,6 +60,7 @@
           combine [
             complete.rustc
             complete.cargo
+            complete.clippy
             complete.rust-src
             complete.rustfmt
             complete.rust-analyzer

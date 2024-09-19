@@ -1,9 +1,7 @@
-use egui::Checkbox;
 use egui_backend::egui::FullOutput;
 use egui_backend::sdl2::video::GLProfile;
 use egui_backend::{egui, gl, sdl2};
 use egui_backend::{sdl2::event::Event, DpiScaling, ShaderVersion};
-use file_tree::FileTree;
 use std::time::Instant;
 // Alias the backend to something less mouthful
 use egui_sdl2_gl as egui_backend;
@@ -12,6 +10,7 @@ use sdl2::video::SwapInterval;
 mod file_system;
 mod file_tree;
 mod fstree;
+mod gamepad_handler;
 mod prelude;
 mod ui;
 
@@ -67,6 +66,37 @@ fn main() {
         );
     }
 
+    // Initialize controllers
+    let game_controller_subsystem = sdl_context.game_controller().unwrap();
+    let available = game_controller_subsystem.num_joysticks().unwrap();
+
+    println!("{} joysticks available", available);
+
+    // Iterate over all available joysticks and look for game controllers.
+    let controller = (0..available)
+        .find_map(|id| {
+            if !game_controller_subsystem.is_game_controller(id) {
+                println!("{} is not a game controller", id);
+                return None;
+            }
+
+            println!("Attempting to open controller {}", id);
+
+            match game_controller_subsystem.open(id) {
+                Ok(c) => {
+                    // We managed to find and open a game controller,
+                    // exit the loop
+                    println!("Success: opened \"{}\"", c.name());
+                    Some(c)
+                }
+                Err(e) => {
+                    println!("failed: {:?}", e);
+                    None
+                }
+            }
+        })
+        .expect("Couldn't open any controller");
+
     let path = std::path::Path::new("/mnt/hdd/projects/Ougon");
     let tree = fstree::FsTree::from_path(path);
     let start_time = Instant::now();
@@ -115,13 +145,15 @@ fn main() {
             if let Some(event) = event_pump.wait_event_timeout(5) {
                 match event {
                     Event::Quit { .. } => break 'running,
-                    Event::ControllerButtonDown { button, .. } => match button {
-                        sdl2::controller::Button::Start => break 'running,
-                        x => {
-                            dbg!(x);
-                        }
-                    },
+                    // Event::ControllerButtonDown { button, .. } => match button {
+                    //     sdl2::controller::Button::Start => break 'running,
+                    //     x => {
+                    //         dbg!(x);
+                    //     }
+                    // },
                     _ => {
+                        gamepad_handler::handle(&event, &mut egui_state);
+
                         // Process input event
                         egui_state.process_input(&window, event, &mut painter);
                     }
@@ -130,15 +162,16 @@ fn main() {
         } else {
             for event in event_pump.poll_iter() {
                 match event {
-                    Event::ControllerButtonDown { button, .. } => match button {
-                        sdl2::controller::Button::Start => break 'running,
-                        x => {
-                            dbg!(x);
-                        }
-                    },
-
+                    // Event::ControllerButtonDown { button, .. } => match button {
+                    //     sdl2::controller::Button::Start => break 'running,
+                    //     _ => {
+                    //         egui_state.process_input(&window, event, &mut painter);
+                    //     }
+                    // },
                     Event::Quit { .. } => break 'running,
                     _ => {
+                        gamepad_handler::handle(&event, &mut egui_state);
+
                         // Process input event
                         egui_state.process_input(&window, event, &mut painter);
                     }

@@ -48,7 +48,6 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     let enable_vsync = false;
-    let quit = false;
 
     if enable_vsync {
         if let Err(error) = window.subsystem().gl_set_swap_interval(SwapInterval::VSync) {
@@ -129,10 +128,6 @@ fn main() {
                     egui_state.process_input(&window, event, &mut painter);
                 }
             }
-        }
-
-        if quit {
-            break;
         }
     }
 }

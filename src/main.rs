@@ -2,6 +2,7 @@ use egui_backend::egui::FullOutput;
 use egui_backend::sdl2::video::GLProfile;
 use egui_backend::{egui, gl, sdl2};
 use egui_backend::{sdl2::event::Event, DpiScaling, ShaderVersion};
+use egui_sdl2_gl::sdl2::event::EventPollIterator;
 use std::time::Instant;
 // Alias the backend to something less mouthful
 use egui_sdl2_gl as egui_backend;
@@ -112,28 +113,20 @@ fn main() {
             .expect("Missing ViewportId::ROOT")
             .repaint_delay;
 
-        if !repaint_after.is_zero() {
-            if let Some(event) = event_pump.wait_event_timeout(5) {
-                match event {
-                    Event::Quit { .. } => break 'running,
-                    _ => {
-                        gamepad::handle(&event, &mut egui_state);
-
-                        // Process input event
-                        egui_state.process_input(&window, event, &mut painter);
-                    }
-                }
-            }
+        let events: Box<dyn Iterator<Item = Event>> = if repaint_after.is_zero() {
+            Box::new(event_pump.poll_iter())
         } else {
-            for event in event_pump.poll_iter() {
-                match event {
-                    Event::Quit { .. } => break 'running,
-                    _ => {
-                        gamepad::handle(&event, &mut egui_state);
+            Box::new(event_pump.wait_timeout_iter(5))
+        };
 
-                        // Process input event
-                        egui_state.process_input(&window, event, &mut painter);
-                    }
+        for event in events {
+            match event {
+                Event::Quit { .. } => break 'running,
+                _ => {
+                    gamepad::handle(&event, &mut egui_state);
+
+                    // Process input event
+                    egui_state.process_input(&window, event, &mut painter);
                 }
             }
         }
